@@ -112,13 +112,13 @@ extern "C"
 
   typedef struct RTMPPacket
   {
-    uint8_t m_headerType;
-    uint8_t m_packetType;
+    uint8_t m_headerType;// ChunkMsgHeader的类型（4种）packetSize[] = { 12, 8, 4, 1 }
+    uint8_t m_packetType;// Message type ID（1-7协议控制；8，9音视频；10以后为AMF编码消息）
     uint8_t m_hasAbsTimestamp;	/* timestamp absolute or relative? */
-    int m_nChannel;
+    int m_nChannel;// 块流ID
     uint32_t m_nTimeStamp;	/* timestamp */
-    int32_t m_nInfoField2;	/* last 4 bytes in a long header */
-    uint32_t m_nBodySize;
+    int32_t m_nInfoField2;	/* last 4 bytes in a long header 消息流ID */
+    uint32_t m_nBodySize;  // 消息长度
     uint32_t m_nBytesRead;
     RTMPChunk *m_chunk;
     char *m_body;

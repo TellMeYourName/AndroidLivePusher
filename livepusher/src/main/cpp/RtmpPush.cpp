@@ -22,35 +22,51 @@ RtmpPush::~RtmpPush() {
 void *callBackPush(void *data) {
 
     RtmpPush *rtmpPush = static_cast<RtmpPush *>(data);
+    // 没有开始推送
     rtmpPush->startPushing = false;
+    // rtmpPush的rtmp
     rtmpPush->rtmp = RTMP_Alloc();
+    // RTMP初始化
     RTMP_Init(rtmpPush->rtmp);
+    // 设置rtmp超时时长
     rtmpPush->rtmp->Link.timeout = 10;
+    // 标识为直播流
     rtmpPush->rtmp->Link.lFlags |= RTMP_LF_LIVE;
+    // 设置RTMP的URL
     RTMP_SetupURL(rtmpPush->rtmp, rtmpPush->url);
     RTMP_EnableWrite(rtmpPush->rtmp);
 
+    // RTMP url 连接失败
     if (!RTMP_Connect(rtmpPush->rtmp, NULL)) {
 //        LOGE("can not connect the url");
         rtmpPush->wlCallJava->onConnectFail("can not connect the url");
+        // 结束线程
         goto end;
     }
+    // 检查rtmp流
     if (!RTMP_ConnectStream(rtmpPush->rtmp, 0)) {
 
         rtmpPush->wlCallJava->onConnectFail("can not connect the stream of service");
+        // 结束线程
         goto end;
     }
+    // 调用java层，连接成功
     rtmpPush->wlCallJava->onConnectsuccess();
+    // 连接成功，开始推送
     rtmpPush->startPushing = true;
+    // 开始时间戳
     rtmpPush->startTime = RTMP_GetTime();
     while (true) {
+        // 停止推送
         if (!rtmpPush->startPushing) {
             break;
         }
 
         RTMPPacket *packet = NULL;
+        // 获取RtmpPacket,线程会阻塞，直到获取到packet
         packet = rtmpPush->queue->getRtmpPacket();
         if (packet != NULL) {
+            // 发送RTMP数据
             int result = RTMP_SendPacket(rtmpPush->rtmp, packet, 1);
             LOGD("RTMP_SendPacket result is %d", result);
             RTMPPacket_Free(packet);
@@ -65,18 +81,21 @@ void *callBackPush(void *data) {
     RTMP_Close(rtmpPush->rtmp);
     RTMP_Free(rtmpPush->rtmp);
     rtmpPush->rtmp = NULL;
+    // 线程结束
     pthread_exit(&rtmpPush->push_thread);
 }
 
 void RtmpPush::init() {
+    // 回调 连接中
     wlCallJava->onConnectint(WL_THREAD_MAIN);
+    // push_thread 创建，创建成功后会调用callBackPush
     pthread_create(&push_thread, NULL, callBackPush, this);
 
 }
 
 void RtmpPush::pushSPSPPS(char *sps, int sps_len, char *pps, int pps_len) {
 
-    int bodysize = sps_len + pps_len + 16;
+    int bodysize = sps_len + pps_len + 16;// TODO 为什么要加16？
     RTMPPacket *packet = static_cast<RTMPPacket *>(malloc(sizeof(RTMPPacket)));
     RTMPPacket_Alloc(packet, bodysize);
     RTMPPacket_Reset(packet);
@@ -132,8 +151,11 @@ void RtmpPush::pushVideoData(char *data, int data_len, bool keyframe) {
     int i = 0;
 
     if (keyframe) {
+        // keyframe
         body[i++] = 0x17;
     } else {
+        // inter-frame  inter frame(for AVC, a non-seekable frame) 不是关键帧，比如P帧
+        // 故可通过与 0x17 或 0x27 的比较，来判断视频帧是否为关键帧。
         body[i++] = 0x27;
     }
 
@@ -166,7 +188,7 @@ void RtmpPush::pushAudioData(char *data, int data_len) {
     RTMPPacket_Alloc(packet, bodysize);
     RTMPPacket_Reset(packet);
     char *body = packet->m_body;
-    body[0] = 0xAF;
+    body[0] = 0xAF; // HE-AAC 44 kHz 16 bit stereo
     body[1] = 0x01;
     memcpy(&body[2], data, data_len);
 
@@ -183,5 +205,6 @@ void RtmpPush::pushAudioData(char *data, int data_len) {
 void RtmpPush::pushStop() {
     startPushing = false;
     queue->notifyQueue();
+    // 以阻塞的方式等待thread指定的线程结束
     pthread_join(push_thread, NULL);
 }

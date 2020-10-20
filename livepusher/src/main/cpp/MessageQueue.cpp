@@ -17,9 +17,12 @@ MessageQueue::~MessageQueue() {
 }
 
 int MessageQueue::putRtmpPacket(RTMPPacket *packet) {
+    // 入队之前上锁
     pthread_mutex_lock(&mutexPacket);
     queuePacket.push(packet);
+    // 通知这里消息已经入队了
     pthread_cond_signal(&condPacket);
+    // 解锁
     pthread_mutex_unlock(&mutexPacket);
     return 0;
 }
@@ -33,12 +36,16 @@ RTMPPacket *MessageQueue::getRtmpPacket() {
         p = queuePacket.front();
         queuePacket.pop();
     } else{
+        // 等待放入Packet
         pthread_cond_wait(&condPacket, &mutexPacket);
     }
     pthread_mutex_unlock(&mutexPacket);
     return p;
 }
 
+/**
+ * 清空packet
+ */
 void MessageQueue::clearQueue() {
 
     pthread_mutex_lock(&mutexPacket);
