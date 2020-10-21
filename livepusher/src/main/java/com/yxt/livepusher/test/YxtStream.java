@@ -71,6 +71,7 @@ public class YxtStream {
     private void initModules() {
         //加载音频模块
         this.yuCamera = new YUCamera(width, height);
+        // 创建EGLSurface
         this.eglSurface = new EGLSurface();
         this.eglSurface.setFps(fps);
         this.render = new CameraGLRender(context, width, height);
@@ -89,8 +90,9 @@ public class YxtStream {
             @Override
             public void recordByte(byte[] audioData, int readSize) {
                 if (audioRecordUitl != null && audioRecordUitl.isStart()) {
-                    if (recordEncoder != null)
+                    if (recordEncoder != null) {
                         recordEncoder.putPCMData(audioData, readSize);
+                    }
                     if (pushRtmpEncoder != null) {
                         pushRtmpEncoder.putPCMData(audioData, readSize);
                     }
@@ -116,8 +118,9 @@ public class YxtStream {
 
                 @Override
                 public void surfaceDestroyed(SurfaceHolder holder) {
-                    if (eglSurface != null)
+                    if (eglSurface != null) {
                         eglSurface.surfaceDestroyed(holder);
+                    }
                 }
             });
         } else {
@@ -185,9 +188,10 @@ public class YxtStream {
      * 开始推送rtmp
      *
      * @param bitstreamType 0是 主码流  1是子码流
-     * @param str
+     * @param str 推流地址
      */
     public void startRtmp(final int bitstreamType, String str) {
+        // 间隔一秒开始推流
         if (startRtmpTime == 0) {
             startRtmpTime = System.currentTimeMillis();
         }
@@ -195,8 +199,11 @@ public class YxtStream {
             return;
         }
         stopRtmpStream();
+        // 当纹理已经创建出来
         if (initFinish) {
+            // 前置摄像头
             if (cameraFacing == FACING_FRONT) {
+                //
                 rtmpPush = new RtmpPush();
                 rtmpPush.initLivePush(str);
                 rtmpPush.setConnectListenr(new ConnectListenr() {
@@ -210,6 +217,7 @@ public class YxtStream {
                         isRTMPPusher = true;
                         Log.e("yxt", "连接成功");
                         pushRtmpEncoder = new PushEncoder(context, textureId);
+                        // 设置流类型为RTMP
                         pushRtmpEncoder.setStreamType(BasePushEncoder.STREAM_TYPE_RTMP);
 
                         if (bitstreamType == 0) {
@@ -221,7 +229,9 @@ public class YxtStream {
                             pushRtmpEncoder.setFps(15);
                             pushRtmpEncoder.setBitrate(250000);
                         }
+                        // 初始化编码器
                         pushRtmpEncoder.initEncodec(eglSurface.getEglContext(), width, height);
+                        // 推流编码器回调
                         pushRtmpEncoder.setOnMediaInfoListener(new BasePushEncoder.OnMediaInfoListener() {
                             @Override
                             public void onMediaTime(int times) {
@@ -264,6 +274,7 @@ public class YxtStream {
                     }
                 });
             } else {
+                // 推送另一路流
                 rtmpPushBack = new RtmpPushBack();
                 rtmpPushBack.initLivePush(str);
                 rtmpPushBack.setConnectListenr(new ConnectListenr() {
@@ -359,6 +370,10 @@ public class YxtStream {
         initModules();
     }
 
+    /**
+     * 设置预览方向
+     * @param context
+     */
     public void prevewAngle(Context context) {
         int angle = ((WindowManager) context.getSystemService(Context.WINDOW_SERVICE)).getDefaultDisplay().getRotation();
         Log.e("angleTotal", "  " + angle);

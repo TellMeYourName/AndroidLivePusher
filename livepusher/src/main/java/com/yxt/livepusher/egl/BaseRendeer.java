@@ -65,12 +65,13 @@ public abstract class BaseRendeer {
 
     public void onCreate() {
         try {
-            //设置透明渲染
+            // 设置透明渲染
             GLES20.glEnable(GLES20.GL_BLEND);
+            // 设置BlendFunc，第一个参数为源混合因子，第二个参数为目的混合因子
             GLES20.glBlendFunc(GLES20.GL_SRC_ALPHA, GLES20.GL_ONE_MINUS_SRC_ALPHA);
-
+            // 顶点着色器
             String vertexSource = ShaderUtils.getRawResource(context, R.raw.vertex_shader_screen);
-
+            // 片元着色器
             String fragmentSource = ShaderUtils.getRawResource(context, R.raw.fragment_shader_screen);
             int[] id = ShaderUtils.createProgram(vertexSource, fragmentSource);
             if (id != null) {
@@ -80,15 +81,27 @@ public abstract class BaseRendeer {
             }
             vPosition = GLES20.glGetAttribLocation(program, "v_Position");
             fPosition = GLES20.glGetAttribLocation(program, "f_Position");
+            // 获取着色器程序中，指定为uniform类型变量的id
             sampler = GLES20.glGetUniformLocation(program, "sTexture");
 
+            // Vertex Buffer object
+            // 不使用VBO时，我们每次绘制（ glDrawArrays ）图形时都是从本地内存处获取顶点数据然后传输给OpenGL来绘制，
+            // 这样就会频繁的操作CPU->GPU增大开销，从而降低效率。
+            // 使用VBO，我们就能把顶点数据缓存到GPU开辟的一段内存中，然后使用时不必再从本地获取，
+            // 而是直接从显存中获取，这样就能提升绘制的效率。
             int[] vbos = new int[1];
             GLES20.glGenBuffers(1, vbos, 0);
+            // 1. 创建VBO得到vboId
             vboId = vbos[0];
+            // 2. 根据id绑定VBO
             GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, vboId);
+            // 3. 分配VBO需要的缓存大小
             GLES20.glBufferData(GLES20.GL_ARRAY_BUFFER, vertexData.length * 4 + fragmentData.length * 4, null, GLES20.GL_STATIC_DRAW);
+            // 4. 为VBO设置顶点数据的值
             GLES20.glBufferSubData(GLES20.GL_ARRAY_BUFFER, 0, vertexData.length * 4, vertexBuffer);
+            // 5. 为VBO设置片元数据的值
             GLES20.glBufferSubData(GLES20.GL_ARRAY_BUFFER, vertexData.length * 4, fragmentData.length * 4, fragmentBuffer);
+            // 6. 解绑VBO
             GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, 0);
 
         } catch (IOException e) {

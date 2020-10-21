@@ -8,6 +8,7 @@ import android.os.Build;
 import android.os.Bundle;
 import android.support.v4.content.ContextCompat;
 import android.view.SurfaceView;
+import android.view.View;
 import android.widget.TextView;
 
 import com.yxt.livepusher.test.CameraGLRender;
@@ -36,14 +37,22 @@ public class MainActivity extends Activity {
 //        yxt = new YxtStream(this);
 
         //设置前后摄像头
-        yxt.setCameraFacing(YxtStream.FACING_BACK);
+        yxt.setCameraFacing(YxtStream.FACING_FRONT);
         //设置帧率
-        yxt.setFps(15);
+        yxt.setFps(60);
 
 
-//        yxt.setWidthAndHeight(480, 640);
+        yxt.setWidthAndHeight(480, 640);
         //开始执行
         yxt.star();
+
+        findViewById(R.id.button).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                // 开始推流
+                yxt.startRtmp(0,"rtmp://10.252.216.144:1935/tv_file");
+            }
+        });
 
         //开始录制mp4
 //        yxt.startRecord("录制地址+文件名");

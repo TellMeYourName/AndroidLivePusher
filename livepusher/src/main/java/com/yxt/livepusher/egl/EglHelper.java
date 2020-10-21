@@ -57,6 +57,7 @@ public class EglHelper {
         if (eglContext != null)
             mEglContext = mEgl.eglCreateContext(mEglDisplay, configs[0], eglContext, attrib_list);
         else
+            // 创建mEglContext
             mEglContext = mEgl.eglCreateContext(mEglDisplay, configs[0], EGL10.EGL_NO_CONTEXT, attrib_list);
 
         if(onEGLContext!= null){

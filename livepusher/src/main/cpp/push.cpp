@@ -10,6 +10,10 @@ JavaVM *javaVM = NULL;
 bool exit = true;
 
 extern "C"
+// extern "C"后，会指示编译器这部分代码按C语言的进行编译，而不是C++的。
+// 由于C++支持函数重载，因此编译器编译函数的过程中会将函数的参数类型也加到编译后的代码中，
+// 而不仅仅是函数名；而C语言并不支持函数重载，
+// 因此编译C语言代码的函数时不会带上函数的参数类型，一般之包括函数名。
 JNIEXPORT void JNICALL
 Java_com_yxt_livepusher_network_rtmp_RtmpPush_initPush(JNIEnv *env, jobject instance,
                                                        jstring pushUrl_) {

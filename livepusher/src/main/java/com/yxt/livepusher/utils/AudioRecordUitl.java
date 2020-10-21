@@ -31,6 +31,9 @@ public class AudioRecordUitl {
         this.onRecordLisener = onRecordLisener;
     }
 
+    /**
+     * 开启一个线程来录制音频
+     */
     public void startRecord() {
         new Thread() {
             @Override
@@ -43,6 +46,7 @@ public class AudioRecordUitl {
                 while (start) {
                     readSize = audioRecord.read(audiodata, 0, bufferSizeInBytes);
                     if (onRecordLisener != null) {
+                        // 读取到音频字节数组，回调给调用中心
                         onRecordLisener.recordByte(audiodata, readSize);
                     }
                 }

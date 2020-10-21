@@ -6,10 +6,16 @@ import android.util.Log;
 public class RtmpPush {
 
 
+    /**
+     * 加载 so库x
+     */
     static {
         System.loadLibrary("push");
     }
 
+    /**
+     * 服务器连接监听器
+     */
     private ConnectListenr connectListenr;
 
 
@@ -37,6 +43,10 @@ public class RtmpPush {
     }
 
 
+    /**
+     * 初始化直播
+     * @param url rtmp 直播地址
+     */
     public void initLivePush(String url) {
         if (!TextUtils.isEmpty(url)) {
             initPush(url);

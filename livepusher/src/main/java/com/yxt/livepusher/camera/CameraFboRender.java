@@ -19,14 +19,17 @@ public class CameraFboRender extends BaseRendeer {
         super(context);
     }
 
+    @Override
     public void onCreate() {
         super.onCreate();
     }
 
+    @Override
     public void onChange(int width, int height) {
         super.onChange(width, height);
     }
 
+    @Override
     public void onDrawFrame(int textureId) {
         super.onDrawFrame(textureId);
 

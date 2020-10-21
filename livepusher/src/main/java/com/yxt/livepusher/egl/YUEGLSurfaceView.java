@@ -18,11 +18,17 @@ public abstract class YUEGLSurfaceView extends SurfaceView implements SurfaceHol
 
     private YUGLThread mYUGLThread;
 
+    /**
+     *  GLRender 负责真正的渲染
+     */
     private YuGLRender mYuGLRender;
     public final static int RENDERMODE_WHEN_DIRTY = 0;
     public final static int RENDERMODE_CONTINUOUSLY = 1;
     private int mRenderMode = RENDERMODE_CONTINUOUSLY;
 
+    /**
+     * 帧率
+     */
     private int fps = 15;
 
     public YUEGLSurfaceView(Context context) {

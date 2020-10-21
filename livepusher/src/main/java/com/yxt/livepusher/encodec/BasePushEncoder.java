@@ -1,12 +1,10 @@
 package com.yxt.livepusher.encodec;
 
-import android.content.Context;
 import android.media.MediaCodec;
 import android.media.MediaCodecInfo;
 import android.media.MediaFormat;
 import android.util.Log;
 import android.view.Surface;
-
 
 import com.yxt.livepusher.egl.EglHelper;
 import com.yxt.livepusher.egl.YUEGLSurfaceView;
@@ -19,36 +17,102 @@ import javax.microedition.khronos.egl.EGLContext;
 
 public abstract class BasePushEncoder {
 
+    /**
+     * 视频Surface，输入输出的缓冲区
+     */
     private Surface surface;
+    /**
+     * EGLContext
+     */
     private EGLContext eglContext;
+
 
     private int width;
     private int height;
 
+    /**
+     * 视频编码器
+     */
     private MediaCodec videoEncodec;
+
+    /**
+     * 媒体格式 AVC eg:MediaFormat.MIMETYPE_VIDEO_AVC、视频宽高
+     */
     private MediaFormat videoFormat;
+
+    /**
+     * 视频Buffer信息
+     */
     private MediaCodec.BufferInfo videoBufferinfo;
 
+    /**
+     * 音频编码器
+     */
     private MediaCodec audioEncodec;
+
+    /**
+     * 音频格式 ，编码格式MediaFormat.MIMETYPE_AUDIO_AAC, 采样率 sampleRate, 声道数 channelCount
+     */
     private MediaFormat audioFormat;
+
+    /**
+     * 音频信息
+     */
     private MediaCodec.BufferInfo audioBufferinfo;
+
+    /**
+     * 音频时间戳
+     */
     private long audioPts = 0;
+
+    /**
+     * 采样率
+     */
     private int sampleRate;
 
+    /**
+     * EGLMediaThread EGL媒体线程
+     */
     private EGLMediaThread mEGLMediaThread;
+    /**
+     * 视频编码线程
+     */
     private VideoEncodecThread videoEncodecThread;
+    /**
+     * 音频编码线程
+     */
     private AudioEncodecThread audioEncodecThread;
+
+    /**
+     * gLRender
+     */
     private YUEGLSurfaceView.YuGLRender gLRender;
 
     public final static int RENDERMODE_WHEN_DIRTY = 0;
     public final static int RENDERMODE_CONTINUOUSLY = 1;
     private int mRenderMode = RENDERMODE_CONTINUOUSLY;
 
+    /**
+     * 帧率
+     */
     private int fps = 15;
+    /**
+     * 比特率 250,000 B/s = 2,000,000 (250,000 * 8)b/s = 2 Mb/s
+     */
     private int bitrate = 250000;
+
+    /**
+     * 媒体信息监听器
+     */
     private OnMediaInfoListener onMediaInfoListener;
 
+    /**
+     * 音频锁
+     */
     private final Object audioLock = new Object();
+    /**
+     * 视频锁
+     */
     private final Object videoLock = new Object();
 
     public static final int STREAM_TYPE_JT1078 = 1;
@@ -127,14 +191,17 @@ public abstract class BasePushEncoder {
         try {
             videoBufferinfo = new MediaCodec.BufferInfo();
             videoFormat = MediaFormat.createVideoFormat(mimeType, width, height);
+            // A key describing the color format of the content in a video format，
+            // COLOR_FormatSurface indicates that the data will be a GraphicBuffer metadata reference.
             videoFormat.setInteger(MediaFormat.KEY_COLOR_FORMAT, MediaCodecInfo.CodecCapabilities.COLOR_FormatSurface);
             videoFormat.setInteger(MediaFormat.KEY_BIT_RATE, bitrate);
             videoFormat.setInteger(MediaFormat.KEY_FRAME_RATE, fps);
+            // 描述关键帧的间隔，如果设置为负数，第一帧之后就没有关键帧；
             videoFormat.setInteger(MediaFormat.KEY_I_FRAME_INTERVAL, 3);
-
+            // 创建视频编码器
             videoEncodec = MediaCodec.createEncoderByType(mimeType);
+            // 使MediaCodec 进入configured状态。 MediaCodec.CONFIGURE_FLAG_ENCODE指明为编码器
             videoEncodec.configure(videoFormat, null, null, MediaCodec.CONFIGURE_FLAG_ENCODE);
-
             surface = videoEncodec.createInputSurface();
 
         } catch (IOException e) {
@@ -160,7 +227,9 @@ public abstract class BasePushEncoder {
             audioBufferinfo = new MediaCodec.BufferInfo();
             audioFormat = MediaFormat.createAudioFormat(mimeType, sampleRate, channelCount);
             audioFormat.setInteger(MediaFormat.KEY_BIT_RATE, 96000);
+            // AAC描述
             audioFormat.setInteger(MediaFormat.KEY_AAC_PROFILE, MediaCodecInfo.CodecProfileLevel.AACObjectLC);
+            // 输入最大字节数
             audioFormat.setInteger(MediaFormat.KEY_MAX_INPUT_SIZE, 4096 * 10);
 
             audioEncodec = MediaCodec.createEncoderByType(mimeType);
@@ -228,7 +297,7 @@ public abstract class BasePushEncoder {
             isStart = false;
             object = new Object();
             eglHelper = new EglHelper();
-            eglHelper.initEgl(encoder.get().surface, encoder.get().eglContext,width,height);
+            eglHelper.initEgl(encoder.get().surface, encoder.get().eglContext, width, height);
 
             while (true) {
                 if (isExit) {
@@ -418,8 +487,8 @@ public abstract class BasePushEncoder {
 //                                }
 ////                                }
 //                            } else if (encoder.get().streamType == BasePushEncoder.STREAM_TYPE_JT1078) {
-                            if (outputBuffer.get(5) == -120) {
-//                            if (videoBufferinfo.flags == MediaCodec.BUFFER_FLAG_KEY_FRAME) {
+//                            if (outputBuffer.get(5) == -120) {
+                            if (videoBufferinfo.flags == MediaCodec.BUFFER_FLAG_KEY_FRAME) {
                                 keyFrame = true;
                                 if (encoder.get().onMediaInfoListener != null) {
                                     encoder.get().onMediaInfoListener.onSPSPPSInfo(sps, pps);
@@ -546,6 +615,12 @@ public abstract class BasePushEncoder {
 
     }
 
+    /**
+     * 此缓冲区的显示时间戳（以微秒为单位）
+     * @param size 当前大小
+     * @param sampleRate 采样率
+     * @return
+     */
     private long getAudioPts(int size, int sampleRate) {
         audioPts += (long) (1.0 * size / (sampleRate * 2 * 2) * 1000000.0);
         return audioPts;

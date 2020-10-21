@@ -44,13 +44,19 @@ public class ShaderUtils {
     }
 
     public static int[] createProgram(String vertexSource, String fragmentSource) {
+        // 加载顶点着色器
         int vertexShader = loadShader(GLES20.GL_VERTEX_SHADER, vertexSource);
+        // 加载片元着色器
         int fragmentShader = loadShader(GLES20.GL_FRAGMENT_SHADER, fragmentSource);
 
         if (vertexShader != 0 && fragmentShader != 0) {
+            // 创建着色器程序
             int program = GLES20.glCreateProgram();
+            // 向程序中加入顶点着色器
             GLES20.glAttachShader(program, vertexShader);
+            // 向程序中加入片元着色器
             GLES20.glAttachShader(program, fragmentShader);
+            // 链接程序
             GLES20.glLinkProgram(program);
             return new int[]{vertexShader, fragmentShader, program};
         }

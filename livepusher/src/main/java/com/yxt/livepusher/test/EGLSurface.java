@@ -26,8 +26,6 @@ public class EGLSurface {
     private int fps;
 
     public EGLSurface() {
-
-
     }
 
     public void setFps(int fps) {
@@ -35,10 +33,9 @@ public class EGLSurface {
     }
 
     public void setRenderMode(int mRenderMode) {
-        if (mYuGLRender == null)
+        if (mYuGLRender == null) {
             throw new RuntimeException("must set render before");
-
-
+        }
         this.mRenderMode = mRenderMode;
     }
 
@@ -62,8 +59,9 @@ public class EGLSurface {
     }
 
     public void surfaceCreated() {
-        if (mSurface == null)
+        if (mSurface == null) {
             mSurface = new Surface(new SurfaceTexture(10));
+        }
         mYUGLThread = new GLThread(new WeakReference<EGLSurface>(this));
         mYUGLThread.isCreate = true;
         mYUGLThread.start();
@@ -119,7 +117,7 @@ public class EGLSurface {
             isStart = false;
             object = new Object();
             eglHelper = new EglHelper();
-            eglHelper.initEgl(yuEglSurfaceViewWeakReference.get().mSurface, yuEglSurfaceViewWeakReference.get().mEglContext,width,height);
+            eglHelper.initEgl(yuEglSurfaceViewWeakReference.get().mSurface, yuEglSurfaceViewWeakReference.get().mEglContext, width, height);
             while (true) {
                 if (isExit) {
                     release();
@@ -197,8 +195,9 @@ public class EGLSurface {
                 eglHelper.onDestoryEgl();
                 eglHelper = null;
                 object = null;
-                if (yuEglSurfaceViewWeakReference != null && yuEglSurfaceViewWeakReference.get() != null && yuEglSurfaceViewWeakReference.get().mYuGLRender != null)
+                if (yuEglSurfaceViewWeakReference != null && yuEglSurfaceViewWeakReference.get() != null && yuEglSurfaceViewWeakReference.get().mYuGLRender != null) {
                     yuEglSurfaceViewWeakReference.get().mYuGLRender.onDeleteTextureId();
+                }
                 yuEglSurfaceViewWeakReference = null;
             }
         }

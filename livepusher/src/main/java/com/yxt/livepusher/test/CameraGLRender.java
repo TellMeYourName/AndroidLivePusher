@@ -27,21 +27,36 @@ import javax.microedition.khronos.opengles.GL10;
 public class CameraGLRender implements YUEGLSurfaceView.YuGLRender, SurfaceTexture.OnFrameAvailableListener {
 
     private Context context;
+    /**
+     * 定义顶点坐标
+     */
     private float[] vertexData = {
+            // 左下角坐标
             -1f, -1f,
+            // 右下角坐标
             1f, -1f,
+            // 左上角坐标
             -1f, 1f,
+            // 右上角坐标
             1f, 1f,
 
     };
+
+    /**
+     * 纹理坐标系
+     */
     private float[] fragmentData = {
 //            0f, 0f,
 //            1f, 0f,
 //            0f, 1f,
 //            1f, 1f
+            // 左上角
             0f, 1f,
+            // 右上角
             1f, 1f,
+            // 左下角
             0f, 0f,
+            // 右下角
             1f, 0f
 
     };
@@ -54,27 +69,51 @@ public class CameraGLRender implements YUEGLSurfaceView.YuGLRender, SurfaceTextu
     private int fPosition;
     private int vboId = -1;
     private int fboId = -1;
+    /**
+     * 用于显示的纹理ID
+     */
     private int fboTextureId = -1;
-
+    /**
+     * 相机纹理id
+     */
     private int cameraTextureId = -1;
     private int umatrixl;
     private float[] matrix = new float[16];
 
+    /**
+     * Captures frames from an image stream as an OpenGL ES texture.
+     * 从图片输入流中捕获帧来作为OpenGL ES的纹理
+     */
     private SurfaceTexture surfaceTexture;
 
     private OnSurfaceCreateListener onSurfaceCreateListener;
 
     private CameraFboRender cameraFboRender;
 
-    //屏幕的宽
+    /**
+     * 屏幕的宽
+     */
     private int screenWidth;
-    //屏幕的高
+    /**
+     * 屏幕的高
+     */
     private int screenHeight;
-    //实际控件的宽
+    /**
+     * 实际控件的宽
+     */
     private int width;
+    /**
+     * 实际控件的高
+     */
     private int height;
 
+    /**
+     * 截图监听器
+     */
     private ScreenShotListener screenShotListener;
+    /**
+     * 截图线程
+     */
     private Thread screenShotThread;
     private boolean requestScreenBitmap = false;
 
@@ -85,10 +124,10 @@ public class CameraGLRender implements YUEGLSurfaceView.YuGLRender, SurfaceTextu
         this.context = context;
         restMatrix();
         cameraFboRender = new CameraFboRender(context);
-        vertexBuffer = ByteBuffer.allocateDirect(vertexData.length * 4)
-                .order(ByteOrder.nativeOrder())
-                .asFloatBuffer()
-                .put(vertexData);
+        vertexBuffer = ByteBuffer.allocateDirect(vertexData.length * 4)// 1个float占用4个字节
+                .order(ByteOrder.nativeOrder()) // 设计大小端模式，采用和底层一致的模式
+                .asFloatBuffer() // 我们不希望按字节操作，将坐标数据转换为FloatBuffer
+                .put(vertexData); // 将数据从Android应用的虚拟机内存中放到Native的内存中
         vertexBuffer.position(0);
         fragmentBuffer = ByteBuffer.allocateDirect(fragmentData.length * 4)
                 .order(ByteOrder.nativeOrder())
@@ -101,14 +140,15 @@ public class CameraGLRender implements YUEGLSurfaceView.YuGLRender, SurfaceTextu
 
     }
 
+    /**
+     * 初始化矩阵
+     */
     public void restMatrix() {
-        //初始化矩阵
         Matrix.setIdentityM(matrix, 0);
     }
 
     public void setAngle(float angle, float x, float y, float z) {
         Matrix.rotateM(matrix, 0, angle, x, y, z);
-
     }
 
 
@@ -145,16 +185,16 @@ public class CameraGLRender implements YUEGLSurfaceView.YuGLRender, SurfaceTextu
             fboId = fbos[0];
             GLES20.glBindFramebuffer(GLES20.GL_FRAMEBUFFER, fboId);
 
-
+            // 用于存储返回的纹理对象ID
             int[] textureIds = new int[1];
             GLES20.glGenTextures(1, textureIds, 0);
             fboTextureId = textureIds[0];
-            //绑定纹理ID
+            // 绑定纹理ID
             GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, fboTextureId);
 //            GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
 //            GLES20.glUniform1i(sampler, 0);
 
-            //环绕设置 超出纹理坐标    S是横坐标  T是纵坐标   GL_REPEAT重复
+            // 环绕设置 超出纹理坐标    S是横坐标  T是纵坐标   GL_REPEAT重复
             GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_WRAP_S, GLES20.GL_REPEAT);
             GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_WRAP_T, GLES20.GL_REPEAT);
             //过滤 缩小放大  线性
@@ -176,9 +216,10 @@ public class CameraGLRender implements YUEGLSurfaceView.YuGLRender, SurfaceTextu
 //            }
             Log.e("screenWidth", screenWidth + "   " + screenHeight);
             Log.e("宽度", this.width + "  " + this.height);
+            // 指定纹理
             GLES20.glTexImage2D(GLES20.GL_TEXTURE_2D, 0, GLES20.GL_RGBA, screenWidth, screenHeight, 0, GLES20.GL_RGBA, GLES20.GL_UNSIGNED_BYTE, null);
 
-
+            // 把纹理绑定到颜色附件
             GLES20.glFramebufferTexture2D(GLES20.GL_FRAMEBUFFER, GLES20.GL_COLOR_ATTACHMENT0, GLES20.GL_TEXTURE_2D, fboTextureId, 0);
 
             //判断 fbo是否绑定正常
@@ -228,6 +269,7 @@ public class CameraGLRender implements YUEGLSurfaceView.YuGLRender, SurfaceTextu
     @Override
     public void onDrawFrame() {
         if (surfaceTexture != null)
+            // 更新
             surfaceTexture.updateTexImage();
 
         //清屏
@@ -387,7 +429,14 @@ public class CameraGLRender implements YUEGLSurfaceView.YuGLRender, SurfaceTextu
         void onSurfaceCreate(SurfaceTexture surfaceTexture, int textureId);
     }
 
+    /**
+     * 截图监听器
+     */
     public interface ScreenShotListener {
+        /**
+         * 图片可用回调
+         * @param bitmap 图片
+         */
         void onBitmapAvailable(Bitmap bitmap);
     }
 
