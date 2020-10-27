@@ -185,11 +185,15 @@ public abstract class BaseVideoEncoder {
     public void putPCMData(byte[] buffer, int size) {
         try {
             if (audioEncodecThread != null && !audioEncodecThread.isExit && buffer != null && size > 0) {
+                //  Returns the index of an input buffer to be filled with valid data or -1
+                //  if no such buffer is currently available.
                 int inputBufferindex = audioEncodec.dequeueInputBuffer(0);
                 if (inputBufferindex >= 0) {
+                    // Retrieve the set of input buffers.
                     ByteBuffer byteBuffer = audioEncodec.getInputBuffers()[inputBufferindex];
                     byteBuffer.clear();
                     byteBuffer.put(buffer);
+
                     long pts = getAudioPts(size, sampleRate);
                     audioEncodec.queueInputBuffer(inputBufferindex, 0, size, pts, 0);
                 }
@@ -558,6 +562,12 @@ public abstract class BaseVideoEncoder {
         void onMediaTime(int times);
     }
 
+    /**
+     * 得到音频的pts（Presentation Time Stamp）显示时间戳
+     * @param size
+     * @param sampleRate
+     * @return
+     */
     private long getAudioPts(int size, int sampleRate) {
         audioPts += (long) (1.0 * size / (sampleRate * 2 * 2) * 1000000.0);
         return audioPts;

@@ -181,23 +181,33 @@ void RtmpPush::pushVideoData(char *data, int data_len, bool keyframe) {
     queue->putRtmpPacket(packet);
 }
 
+/**
+ * 将音频数据压入队列
+ * @param data 数据
+ * @param data_len 数据长度
+ */
 void RtmpPush::pushAudioData(char *data, int data_len) {
-
     int bodysize = data_len + 2;
     RTMPPacket *packet = static_cast<RTMPPacket *>(malloc(sizeof(RTMPPacket)));
     RTMPPacket_Alloc(packet, bodysize);
     RTMPPacket_Reset(packet);
     char *body = packet->m_body;
-    body[0] = 0xAF; // HE-AAC 44 kHz 16 bit stereo
+    // HE-AAC 44 kHz 16 bit stereo
+    body[0] = 0xAF;
     body[1] = 0x01;
     memcpy(&body[2], data, data_len);
-
+    // 下面RTMP 头信息
+    // Message type ID
     packet->m_packetType = RTMP_PACKET_TYPE_AUDIO;
+    // 消息长度
     packet->m_nBodySize = bodysize;
+    // 时间戳
     packet->m_nTimeStamp = RTMP_GetTime() - startTime;
     packet->m_hasAbsTimestamp = 0;
+    // 块流ID
     packet->m_nChannel = 0x04;
     packet->m_headerType = RTMP_PACKET_SIZE_LARGE;
+    // 消息流ID
     packet->m_nInfoField2 = rtmp->m_stream_id;
     queue->putRtmpPacket(packet);
 }

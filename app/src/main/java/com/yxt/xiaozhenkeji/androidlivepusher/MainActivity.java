@@ -1,6 +1,7 @@
 package com.yxt.xiaozhenkeji.androidlivepusher;
 
 import android.app.Activity;
+import android.content.Context;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
@@ -9,6 +10,7 @@ import android.os.Bundle;
 import android.support.v4.content.ContextCompat;
 import android.view.SurfaceView;
 import android.view.View;
+import android.view.WindowManager;
 import android.widget.TextView;
 
 import com.yxt.livepusher.test.CameraGLRender;
@@ -41,8 +43,12 @@ public class MainActivity extends Activity {
         //设置帧率
         yxt.setFps(60);
 
-
-        yxt.setWidthAndHeight(480, 640);
+        WindowManager wm = (WindowManager) this
+                .getSystemService(Context.WINDOW_SERVICE);
+        int width = wm.getDefaultDisplay().getWidth();
+        int height = wm.getDefaultDisplay().getHeight();
+        // 设置宽高
+        yxt.setWidthAndHeight(480, 320);
         //开始执行
         yxt.star();
 

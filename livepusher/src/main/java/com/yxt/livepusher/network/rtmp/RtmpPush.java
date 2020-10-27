@@ -44,7 +44,7 @@ public class RtmpPush {
 
 
     /**
-     * 初始化直播
+     * 初始化直播，native方法保存了直播地址，生成了MessageQueue对象，用于存放RTMPPacket
      * @param url rtmp 直播地址
      */
     public void initLivePush(String url) {
@@ -53,6 +53,11 @@ public class RtmpPush {
         }
     }
 
+    /**
+     * 将SPS PPS传递给native
+     * @param sps
+     * @param pps
+     */
     public void pushSPSPPS(byte[] sps, byte[] pps) {
         if (sps != null && pps != null) {
             pushSPSPPS(sps, sps.length, pps, pps.length);

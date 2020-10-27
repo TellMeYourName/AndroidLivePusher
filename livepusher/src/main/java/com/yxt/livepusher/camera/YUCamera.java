@@ -1,18 +1,21 @@
 package com.yxt.livepusher.camera;
 
-import android.content.Context;
 import android.graphics.ImageFormat;
 import android.graphics.SurfaceTexture;
 import android.hardware.Camera;
 import android.util.Log;
-import android.view.Display;
-import android.view.WindowManager;
 
 import java.io.IOException;
 import java.util.List;
 
+/**
+ * 相机类
+ */
 public class YUCamera {
 
+    /**
+     * 纹理id
+     */
     private SurfaceTexture surfaceTexture;
 
     private Camera camera;
@@ -29,10 +32,21 @@ public class YUCamera {
         Log.e("width", width + "  " + height);
     }
 
+    /**
+     * 设置相机宽高
+     * @param width
+     * @param height
+     */
     public void setWidthAndHeight(int width, int height) {
         this.width = width;
         this.height = height;
     }
+
+    /**
+     * 初始化相机
+     * @param surfaceTexture 纹理id
+     * @param cameraId 相机的Id 前置还是后置
+     */
     public void initCamera(SurfaceTexture surfaceTexture, int cameraId) {
         this.surfaceTexture = surfaceTexture;
         setCameraParme(cameraId);
@@ -40,12 +54,16 @@ public class YUCamera {
 
     private void setCameraParme(int cameraId) {
         try {
+            // 打开camera
             camera = Camera.open(cameraId);
+            // 设置预览纹理
             camera.setPreviewTexture(surfaceTexture);
+            // 设置相机参数
             Camera.Parameters parameters = camera.getParameters();
             parameters.setFlashMode("off");
+            // YCrCb format used for images, which uses the NV21 encoding format.
             parameters.setPreviewFormat(ImageFormat.NV21);
-
+            // 设置相机尺寸
             Camera.Size size = getFitSize(parameters.getSupportedPictureSizes());
             if (width > height)
                 parameters.setPictureSize(size.width, size.height);
@@ -58,8 +76,9 @@ public class YUCamera {
                 parameters.setPreviewSize(size.width, size.height);
             else
                 parameters.setPreviewSize(size.width, size.height);
-
+            // 设置相机参数
             camera.setParameters(parameters);
+            // 开启预览
             camera.startPreview();
         } catch (IOException e) {
             e.printStackTrace();
@@ -81,6 +100,11 @@ public class YUCamera {
         setCameraParme(cameraId);
     }
 
+    /**
+     * 调整相机尺寸
+     * @param sizes
+     * @return
+     */
     private Camera.Size getFitSize(List<Camera.Size> sizes) {
         int widtha = width;
         int heightt = height;

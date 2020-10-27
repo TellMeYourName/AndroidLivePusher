@@ -144,6 +144,9 @@ public abstract class BasePushEncoder {
         initMediaEncodec(width, height, 44100, 2);
     }
 
+    /**
+     * 开启录制
+     */
     public void startRecord() {
         if (surface != null && eglContext != null) {
 
@@ -164,6 +167,9 @@ public abstract class BasePushEncoder {
         this.fps = fps;
     }
 
+    /**
+     * 停止录制
+     */
     public void stopRecord() {
         if (mEGLMediaThread != null && videoEncodecThread != null && audioEncodecThread != null) {
             videoEncodecThread.exit();
@@ -202,6 +208,7 @@ public abstract class BasePushEncoder {
             videoEncodec = MediaCodec.createEncoderByType(mimeType);
             // 使MediaCodec 进入configured状态。 MediaCodec.CONFIGURE_FLAG_ENCODE指明为编码器
             videoEncodec.configure(videoFormat, null, null, MediaCodec.CONFIGURE_FLAG_ENCODE);
+           // Requests a Surface to use as the input to an encoder, in place of input buffers
             surface = videoEncodec.createInputSurface();
 
         } catch (IOException e) {
@@ -251,6 +258,7 @@ public abstract class BasePushEncoder {
                     ByteBuffer byteBuffer = audioEncodec.getInputBuffers()[inputBufferindex];
                     byteBuffer.clear();
                     byteBuffer.put(buffer);
+                    // 设置音频的显示时间戳
                     long pts = getAudioPts(size, sampleRate);
                     audioEncodec.queueInputBuffer(inputBufferindex, 0, size, pts, 0);
                 }
@@ -546,25 +554,28 @@ public abstract class BasePushEncoder {
         @Override
         public void run() {
             super.run();
+            // 显示时间戳
             pts = 0;
+            // 控制线程退出
             isExit = false;
+            // After successfully configuring the component, call start.
             audioEncodec.start();
             while (true) {
                 if (isExit) {
-                    //
-
                     audioEncodec.stop();
                     audioEncodec.release();
                     audioEncodec = null;
                     break;
                 }
-
+                // Dequeue an output buffer, block at most "timeoutUs" microseconds.
+                // Returns the index of an output buffer that has been successfully decoded
                 int outputBufferIndex = audioEncodec.dequeueOutputBuffer(bufferInfo, 0);
                 if (outputBufferIndex == MediaCodec.INFO_OUTPUT_FORMAT_CHANGED) {
+                    // The output format has changed, subsequent data will follow the new format.
                 } else {
                     if (outputBufferIndex >= 0) {
                         while (outputBufferIndex >= 0) {
-
+                            // Retrieve the set of output buffers.
                             ByteBuffer outputBuffer = audioEncodec.getOutputBuffers()[outputBufferIndex];
                             outputBuffer.position(bufferInfo.offset);
                             outputBuffer.limit(bufferInfo.offset + bufferInfo.size);
@@ -617,7 +628,8 @@ public abstract class BasePushEncoder {
 
     /**
      * 此缓冲区的显示时间戳（以微秒为单位）
-     * @param size 当前大小
+     *
+     * @param size       当前大小
      * @param sampleRate 采样率
      * @return
      */

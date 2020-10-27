@@ -100,6 +100,7 @@ Java_com_yxt_livepusher_network_rtmp_RtmpPush_pushStop(JNIEnv *env, jobject inst
     // TODO
     if (rtmpPush != NULL) {
         exit = true;
+        // 停止放入RTMP数据
         rtmpPush->pushStop();
         delete (rtmpPush);
         delete (wlCallJava);

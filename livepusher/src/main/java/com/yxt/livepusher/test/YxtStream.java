@@ -28,8 +28,8 @@ public class YxtStream {
     private AudioRecordUitl audioRecordUitl = null;
     private YUCamera yuCamera = null;
 
-    private int width = 640;
-    private int height = 480;
+    private int width = 1920;
+    private int height = 1080;
 
     private int cameraFacing = 0;
 
@@ -73,7 +73,9 @@ public class YxtStream {
         this.yuCamera = new YUCamera(width, height);
         // 创建EGLSurface
         this.eglSurface = new EGLSurface();
+        // 设置帧率
         this.eglSurface.setFps(fps);
+        // 创建render
         this.render = new CameraGLRender(context, width, height);
         this.eglSurface.setRender(render);
         render.setOnSurfaceCreateListener(new CameraGLRender.OnSurfaceCreateListener() {
@@ -81,19 +83,26 @@ public class YxtStream {
             public void onSurfaceCreate(SurfaceTexture surfaceTexture, int textureId) {
                 YxtStream.this.textureId = textureId;
                 initFinish = true;
+                // 当surface已创建才初始化相机
                 yuCamera.initCamera(surfaceTexture, cameraFacing);
             }
         });
+        // 设置预览角度
         prevewAngle(context);
+        // 音频录制
         this.audioRecordUitl = new AudioRecordUitl();
         audioRecordUitl.setOnRecordLisener(new AudioRecordUitl.OnRecordLisener() {
             @Override
             public void recordByte(byte[] audioData, int readSize) {
+                // 音频数据线程回调
                 if (audioRecordUitl != null && audioRecordUitl.isStart()) {
                     if (recordEncoder != null) {
+                        // 设置音频PCM数据
                         recordEncoder.putPCMData(audioData, readSize);
                     }
+                    // 连接成功后才会创建 pushRtmpEncoder
                     if (pushRtmpEncoder != null) {
+                        // 将pts放入队列中
                         pushRtmpEncoder.putPCMData(audioData, readSize);
                     }
                 }
@@ -198,12 +207,13 @@ public class YxtStream {
         if (System.currentTimeMillis() - startRtmpTime < 1 * 1000) {
             return;
         }
+        // 先停止
         stopRtmpStream();
         // 当纹理已经创建出来
         if (initFinish) {
             // 前置摄像头
             if (cameraFacing == FACING_FRONT) {
-                //
+                // 新建一个RTMP推流控制器
                 rtmpPush = new RtmpPush();
                 rtmpPush.initLivePush(str);
                 rtmpPush.setConnectListenr(new ConnectListenr() {
@@ -259,6 +269,7 @@ public class YxtStream {
                             @Override
                             public void onAudioInfo(byte[] data) {
                                 if (rtmpPush != null)
+                                    // 推送音频数据
                                     rtmpPush.pushAudioData(data);
                             }
                         });
