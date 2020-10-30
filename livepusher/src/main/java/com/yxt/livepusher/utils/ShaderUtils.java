@@ -56,7 +56,7 @@ public class ShaderUtils {
             GLES20.glAttachShader(program, vertexShader);
             // 向程序中加入片元着色器
             GLES20.glAttachShader(program, fragmentShader);
-            // 链接程序
+            // 创建空的OpenGL ES程序
             GLES20.glLinkProgram(program);
             return new int[]{vertexShader, fragmentShader, program};
         }

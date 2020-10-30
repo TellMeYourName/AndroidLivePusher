@@ -27,6 +27,7 @@ public class EncodecRender extends BaseRendeer implements YUEGLSurfaceView.YuGLR
 
     @Override
     public void onDrawFrame() {
+        // 绘制帧的时候传入了这个纹理id
         super.onDrawFrame(textureId);
     }
 

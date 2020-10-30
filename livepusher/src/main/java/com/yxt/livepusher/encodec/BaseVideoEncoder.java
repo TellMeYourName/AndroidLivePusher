@@ -130,6 +130,7 @@ public abstract class BaseVideoEncoder {
 
     private void initMediaEncodec(String savePath, int width, int height, int sampleRate, int channelCount) {
         try {
+            // Creates a media muxer that writes to the specified path.
             mediaMuxer = new MediaMuxer(savePath, MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4);
             initVideoEncodec(MediaFormat.MIMETYPE_VIDEO_AVC, width, height);
             initAudioEncodec(MediaFormat.MIMETYPE_AUDIO_AAC, sampleRate, channelCount);
@@ -406,10 +407,12 @@ public abstract class BaseVideoEncoder {
                 }
 
                 int outputBufferIndex = videoEncodec.dequeueOutputBuffer(videoBufferinfo, 0);
-
+                // The output format has changed, subsequent data will follow the new format.
                 if (outputBufferIndex == MediaCodec.INFO_OUTPUT_FORMAT_CHANGED) {
+                    // Adds a track with the specified format.
                     videoTrackIndex = mediaMuxer.addTrack(videoEncodec.getOutputFormat());
                     if (encoder != null && encoder.get() != null && encoder.get().audioEncodecThread != null && encoder.get().audioEncodecThread.audioTrackIndex != -1) {
+                       // Make sure this is called after addTrack and before writeSampleData.
                         mediaMuxer.start();
                         encoder.get().encodecStart = true;
                     }

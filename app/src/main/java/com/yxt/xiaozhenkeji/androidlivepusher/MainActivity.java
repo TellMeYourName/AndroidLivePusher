@@ -48,7 +48,7 @@ public class MainActivity extends Activity {
         int width = wm.getDefaultDisplay().getWidth();
         int height = wm.getDefaultDisplay().getHeight();
         // 设置宽高
-        yxt.setWidthAndHeight(480, 320);
+        yxt.setWidthAndHeight(320, 480);
         //开始执行
         yxt.star();
 

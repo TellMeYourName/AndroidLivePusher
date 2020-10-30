@@ -248,6 +248,7 @@ public class CameraGLRender implements YUEGLSurfaceView.YuGLRender, SurfaceTextu
             surfaceTexture = new SurfaceTexture(cameraTextureId);
             surfaceTexture.setOnFrameAvailableListener(this);
             if (onSurfaceCreateListener != null) {
+                // Surface已创建、去初始化相机
                 onSurfaceCreateListener.onSurfaceCreate(surfaceTexture, fboTextureId);
             }
             GLES20.glBindTexture(GLES11Ext.GL_TEXTURE_EXTERNAL_OES, 0);
@@ -272,9 +273,10 @@ public class CameraGLRender implements YUEGLSurfaceView.YuGLRender, SurfaceTextu
             // 更新
             surfaceTexture.updateTexImage();
 
-        //清屏
+        // Redraw background color
         GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT);
-        GLES20.glClearColor(1.0f, 0.0f, 0.0f, 1.0f);
+        // 设置背景的颜色
+        GLES20.glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
         //使用program
         GLES20.glUseProgram(program);
 

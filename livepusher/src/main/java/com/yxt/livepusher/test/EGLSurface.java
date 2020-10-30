@@ -59,6 +59,7 @@ public class EGLSurface {
     }
 
     public void surfaceCreated() {
+        // 没有预览的surface创建一个
         if (mSurface == null) {
             mSurface = new Surface(new SurfaceTexture(10));
         }
@@ -106,6 +107,10 @@ public class EGLSurface {
         private int height;
         private Object object;
 
+        /**
+         * 图片渲染线程
+         * @param yuEglSurfaceViewWeakReference
+         */
         public GLThread(WeakReference<EGLSurface> yuEglSurfaceViewWeakReference) {
             this.yuEglSurfaceViewWeakReference = yuEglSurfaceViewWeakReference;
         }
@@ -117,6 +122,7 @@ public class EGLSurface {
             isStart = false;
             object = new Object();
             eglHelper = new EglHelper();
+            // 这里的surface就是有预览的surface或者自己new的
             eglHelper.initEgl(yuEglSurfaceViewWeakReference.get().mSurface, yuEglSurfaceViewWeakReference.get().mEglContext, width, height);
             while (true) {
                 if (isExit) {
@@ -143,8 +149,10 @@ public class EGLSurface {
                     }
 
                 }
+                // 这里去回调打开相机
                 onCreate();
                 onChange(width, height);
+                // 开始绘制图片
                 onDraw();
                 isStart = true;
             }
@@ -153,6 +161,7 @@ public class EGLSurface {
         private void onCreate() {
             if (isCreate && yuEglSurfaceViewWeakReference.get().mYuGLRender != null) {
                 isCreate = false;
+                // 这里回调到初始化相机
                 yuEglSurfaceViewWeakReference.get().mYuGLRender.onSurfaceCreated();
             }
         }

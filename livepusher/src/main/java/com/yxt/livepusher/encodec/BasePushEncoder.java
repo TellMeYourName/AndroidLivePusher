@@ -41,7 +41,7 @@ public abstract class BasePushEncoder {
     private MediaFormat videoFormat;
 
     /**
-     * 视频Buffer信息
+     * 视频Buffer信息，pts就在这里面
      */
     private MediaCodec.BufferInfo videoBufferinfo;
 
@@ -151,7 +151,6 @@ public abstract class BasePushEncoder {
         if (surface != null && eglContext != null) {
 
             audioPts = 0;
-
             mEGLMediaThread = new EGLMediaThread(new WeakReference<BasePushEncoder>(this));
             videoEncodecThread = new VideoEncodecThread(new WeakReference<BasePushEncoder>(this));
             audioEncodecThread = new AudioEncodecThread(new WeakReference<BasePushEncoder>(this));
@@ -263,6 +262,7 @@ public abstract class BasePushEncoder {
                     audioEncodec.queueInputBuffer(inputBufferindex, 0, size, pts, 0);
                 }
                 synchronized (audioLock) {
+                    // 放了数据后通知等待的线程
                     audioLock.notifyAll();
                 }
             }
@@ -289,6 +289,10 @@ public abstract class BasePushEncoder {
         private int mRenderMode;
         private YUEGLSurfaceView.YuGLRender gLRender;
 
+        /**
+         * 这个线程用于将纹理id的内容渲染到surface上面
+         * @param encoder
+         */
         public EGLMediaThread(WeakReference<BasePushEncoder> encoder) {
             this.encoder = encoder;
             width = encoder.get().width;
@@ -305,6 +309,7 @@ public abstract class BasePushEncoder {
             isStart = false;
             object = new Object();
             eglHelper = new EglHelper();
+            // 这个surface在初始化过程中产生的    surface = videoEncodec.createInputSurface();
             eglHelper.initEgl(encoder.get().surface, encoder.get().eglContext, width, height);
 
             while (true) {
@@ -332,15 +337,20 @@ public abstract class BasePushEncoder {
                         throw new RuntimeException("mRenderMode is wrong value");
                     }
                 }
+                // 创建opengl
                 onCreate();
                 onChange(width, height);
+                // 开始绘制
                 onDraw();
                 isStart = true;
-                if (encoder != null && encoder.get() != null)
+                if (encoder != null && encoder.get() != null) {
                     synchronized (encoder.get().videoLock) {
-                        if (encoder != null && encoder.get() != null)
+                        if (encoder != null && encoder.get() != null) {
+                            // 这里已经把视频帧绘制到surface上面去了，通知视频编码线程取数据
                             encoder.get().videoLock.notifyAll();
+                        }
                     }
+                }
             }
 
         }
@@ -397,17 +407,39 @@ public abstract class BasePushEncoder {
         }
     }
 
+    /**
+     * 视频编码线程
+     */
     static class VideoEncodecThread extends Thread {
         private WeakReference<BasePushEncoder> encoder;
-
+        /**
+         * 控制是否退出线程
+         */
         private boolean isExit;
-
+        /**
+         * codec processes input data to generate output data
+         */
         private MediaCodec videoEncodec;
+        /**
+         * BufferInfo
+         */
         private MediaCodec.BufferInfo videoBufferinfo;
-
+        /**
+         * pts
+         *
+         */
         private long pts;
+        /**
+         * sps 字节数组
+         */
         private byte[] sps;
+        /**
+         * pps字节数组
+         */
         private byte[] pps;
+        /**
+         * 关键帧
+         */
         private boolean keyFrame = false;
 
         private boolean isFirst;
@@ -424,24 +456,27 @@ public abstract class BasePushEncoder {
             super.run();
             pts = 0;
             isExit = false;
+            // mediacodec 在父类创建的时候调用了configure，所以这里可以start
             videoEncodec.start();
             isFirst = false;
             while (true) {
                 if (isExit) {
                     isFirst = false;
+                    // 退出要调用stop和release
                     videoEncodec.stop();
                     videoEncodec.release();
                     videoEncodec = null;
                     Log.d("yxt", "录制完成");
-
                     break;
                 }
 
                 int outputBufferIndex = videoEncodec.dequeueOutputBuffer(videoBufferinfo, 0);
                 keyFrame = false;
+                // The output format has changed, subsequent data will follow the new format.:
+                // 输出格式已经改变,后续数据将按照新的格式。
                 if (outputBufferIndex == MediaCodec.INFO_OUTPUT_FORMAT_CHANGED) {
                     Log.d("yxt", "INFO_OUTPUT_FORMAT_CHANGED");
-
+                    // 对于H.264来说，"csd-0"和"csd-1"分别对应sps和pps；对于AAC来说，"csd-0"对应ADTS
                     ByteBuffer spsb = videoEncodec.getOutputFormat().getByteBuffer("csd-0");
                     sps = new byte[spsb.remaining()];
                     spsb.get(sps, 0, sps.length);
@@ -454,19 +489,25 @@ public abstract class BasePushEncoder {
                     Log.d("yxt", "pps:" + byteToHex(pps));
 
                 } else {
+                    // 能拿到buffer
                     if (outputBufferIndex >= 0) {
                         while (outputBufferIndex >= 0) {
                             ByteBuffer outputBuffer = videoEncodec.getOutputBuffers()[outputBufferIndex];
+                            // Sets this buffer's position
                             outputBuffer.position(videoBufferinfo.offset);
+                          // Sets this buffer's limit.
                             outputBuffer.limit(videoBufferinfo.offset + videoBufferinfo.size);
                             //
                             if (pts == 0) {
                                 pts = videoBufferinfo.presentationTimeUs;
                             }
+                            // 设置当前pts
                             videoBufferinfo.presentationTimeUs = videoBufferinfo.presentationTimeUs - pts;
                             byte[] data = new byte[0];
+                            // 是RTMP协议
                             if (encoder != null && encoder.get() != null && encoder.get().streamType == BasePushEncoder.STREAM_TYPE_RTMP) {
                                 data = new byte[outputBuffer.remaining()];
+                                // 获取到视频数据
                                 outputBuffer.get(data, 0, data.length);
                                 Log.d("yxt", "data:" + byteToHex(data));
 
@@ -496,6 +537,7 @@ public abstract class BasePushEncoder {
 ////                                }
 //                            } else if (encoder.get().streamType == BasePushEncoder.STREAM_TYPE_JT1078) {
 //                            if (outputBuffer.get(5) == -120) {
+                            // 是否是关键帧
                             if (videoBufferinfo.flags == MediaCodec.BUFFER_FLAG_KEY_FRAME) {
                                 keyFrame = true;
                                 if (encoder.get().onMediaInfoListener != null) {
@@ -506,13 +548,16 @@ public abstract class BasePushEncoder {
 
                             if (encoder != null && encoder.get() != null && encoder.get().onMediaInfoListener != null) {
                                 if (encoder.get().streamType == BasePushEncoder.STREAM_TYPE_RTMP) {
+                                    // 非关键帧数据
                                     encoder.get().onMediaInfoListener.onVideoInfo(data, keyFrame);
                                 } else if (encoder.get().streamType == BasePushEncoder.STREAM_TYPE_JT1078) {
                                     encoder.get().onMediaInfoListener.onVideoSPSPPS(data);
                                 }
                                 encoder.get().onMediaInfoListener.onMediaTime((int) (videoBufferinfo.presentationTimeUs / 1000000));
                             }
+                            // return the buffer to the codec
                             videoEncodec.releaseOutputBuffer(outputBufferIndex, false);
+                            // Dequeue an output buffer
                             outputBufferIndex = videoEncodec.dequeueOutputBuffer(videoBufferinfo, 0);
                         }
                     } else {

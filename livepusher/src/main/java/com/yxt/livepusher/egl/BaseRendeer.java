@@ -79,7 +79,9 @@ public abstract class BaseRendeer {
                 fragmentShader = id[1];
                 program = id[2];
             }
+            // 获取顶点着色器的位置的句柄
             vPosition = GLES20.glGetAttribLocation(program, "v_Position");
+            // 获取片元着色器的位置的句柄
             fPosition = GLES20.glGetAttribLocation(program, "f_Position");
             // 获取着色器程序中，指定为uniform类型变量的id
             sampler = GLES20.glGetUniformLocation(program, "sTexture");
@@ -116,17 +118,21 @@ public abstract class BaseRendeer {
     public void onDrawFrame(int textureId) {
         //清屏
         GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT);
-        GLES20.glClearColor(1.0f, 0.0f, 0.0f, 1.0f);
+        //  设置背景的颜色
+        GLES20.glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
         //使用program
         GLES20.glUseProgram(program);
         GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, vboId);
 
         //绑定fbo纹理
         GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, textureId);
+        // 启用顶点位置的句柄
         GLES20.glEnableVertexAttribArray(vPosition);
+        // 准备坐标数据
         GLES20.glVertexAttribPointer(vPosition, 2, GLES20.GL_FLOAT, false, 8, 0);
         GLES20.glEnableVertexAttribArray(fPosition);
         GLES20.glVertexAttribPointer(fPosition, 2, GLES20.GL_FLOAT, false, 8, vertexData.length * 4);
+        // // 绘制三角形
         GLES20.glDrawArrays(GLES20.GL_TRIANGLE_STRIP, 0, 4);
 
 

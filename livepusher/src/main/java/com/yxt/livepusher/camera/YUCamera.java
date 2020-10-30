@@ -44,7 +44,7 @@ public class YUCamera {
 
     /**
      * 初始化相机
-     * @param surfaceTexture 纹理id
+     * @param surfaceTexture SurfaceTexture
      * @param cameraId 相机的Id 前置还是后置
      */
     public void initCamera(SurfaceTexture surfaceTexture, int cameraId) {
@@ -56,7 +56,7 @@ public class YUCamera {
         try {
             // 打开camera
             camera = Camera.open(cameraId);
-            // 设置预览纹理
+            // Sets the SurfaceTexture to be used for live preview
             camera.setPreviewTexture(surfaceTexture);
             // 设置相机参数
             Camera.Parameters parameters = camera.getParameters();

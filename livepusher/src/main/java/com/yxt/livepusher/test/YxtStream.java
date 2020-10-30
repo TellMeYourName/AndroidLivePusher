@@ -69,7 +69,7 @@ public class YxtStream {
     }
 
     private void initModules() {
-        //加载音频模块
+        //加载相机
         this.yuCamera = new YUCamera(width, height);
         // 创建EGLSurface
         this.eglSurface = new EGLSurface();
@@ -83,7 +83,7 @@ public class YxtStream {
             public void onSurfaceCreate(SurfaceTexture surfaceTexture, int textureId) {
                 YxtStream.this.textureId = textureId;
                 initFinish = true;
-                // 当surface已创建才初始化相机
+                // 当surface已创建才初始化相机，相机绑定到的是SurfaceTexture，而不是纹理id
                 yuCamera.initCamera(surfaceTexture, cameraFacing);
             }
         });
@@ -116,6 +116,7 @@ public class YxtStream {
             surfaceView.getHolder().addCallback(new SurfaceHolder.Callback() {
                 @Override
                 public void surfaceCreated(SurfaceHolder holder) {
+                    // 设置surface和context
                     eglSurface.setSurfaceAndEglContext(surfaceView.getHolder().getSurface(), null);
                     eglSurface.surfaceCreated();
                 }
@@ -226,6 +227,7 @@ public class YxtStream {
                     public void onConnectSuccess() {
                         isRTMPPusher = true;
                         Log.e("yxt", "连接成功");
+                        // 传入了纹理id
                         pushRtmpEncoder = new PushEncoder(context, textureId);
                         // 设置流类型为RTMP
                         pushRtmpEncoder.setStreamType(BasePushEncoder.STREAM_TYPE_RTMP);

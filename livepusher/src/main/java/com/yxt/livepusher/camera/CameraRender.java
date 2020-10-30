@@ -218,7 +218,7 @@ public class CameraRender implements YUEGLSurfaceView.YuGLRender, SurfaceTexture
         surfaceTexture.updateTexImage();
         //清屏
         GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT);
-        GLES20.glClearColor(1.0f, 0.0f, 0.0f, 1.0f);
+        GLES20.glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
         //使用program
         GLES20.glUseProgram(program);
 //        Matrix.rotateM(matrix,0,angle,x,y,z);
