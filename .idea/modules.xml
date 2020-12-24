@@ -2,9 +2,9 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/AndroidLivePusher.iml" filepath="$PROJECT_DIR$/.idea/modules/AndroidLivePusher.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/app/AndroidLivePusher.app.iml" filepath="$PROJECT_DIR$/.idea/modules/app/AndroidLivePusher.app.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/livepusher/AndroidLivePusher.livepusher.iml" filepath="$PROJECT_DIR$/.idea/modules/livepusher/AndroidLivePusher.livepusher.iml" />
-      <module fileurl="file://$PROJECT_DIR$/.idea/modules/Desktop.AndroidLivePusher.iml" filepath="$PROJECT_DIR$/.idea/modules/Desktop.AndroidLivePusher.iml" />
     </modules>
   </component>
 </project>
